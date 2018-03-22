@@ -19,12 +19,16 @@ package main
 import (
 	"log"
 	"net"
+	"hps/app/sip"
+	"hps/app/config"
+	"hps/app/gonfig"
 )
-
+var Cnf gonfig.Gonfig
 func start(protocol string)	{
 	log.Println("Starting "+protocol+" listener")
 	if protocol == "udp" {
-		address,err := net.ResolveUDPAddr("udp",":5060")
+		udpPort,_:=Cnf.GetString("server/udpPort","5060")
+		address,err := net.ResolveUDPAddr("udp",":"+udpPort)
 		if err != nil {
 			log.Fatal("ERROR ",err)
 		} else {
@@ -32,12 +36,11 @@ func start(protocol string)	{
 			if err != nil	{
 				log.Fatal("ERROR ",err)
 			} else {
-				log.Println("Listening on udp:5060")
+				log.Println("Listening on udp:"+udpPort)
 				buf := make([]byte, 1024)
 				for {
 					n,addr,err := ln.ReadFromUDP(buf)
-					log.Println("Received ",string(buf[0:n]), " from ",addr)
-
+					sip.Message(addr,string(buf[0:n])) //send the message to sip package
 					if err != nil {
 						log.Println("ERROR ",err)
 					}
@@ -45,32 +48,39 @@ func start(protocol string)	{
 			}
 		}
 	} else {
-		ln,err := net.Listen(protocol, ":5060")
-		if err != nil {
-			log.Fatal("ERROR ",err,ln)
-		} else	{
-			log.Output(0,"Listening on "+protocol+":5060")
-			buf := make([]byte, 1024)
-			for {
-				conn, connErr := ln.Accept()
-				if connErr != nil {
-					// handle error
-					log.Println("ERROR ",connErr)
-				} else {
-					n,errRead := conn.Read(buf)
-					if errRead != nil {
-						log.Fatal("ERROR", errRead)
+		tcpPort,_:=Cnf.GetString("server/tcpPort","5060")
+		address,err := net.ResolveTCPAddr("tcp",":"+tcpPort)
+		if err !=nil{
+			log.Println("ERROR ",err)
+		} else {
+			ln, err := net.ListenTCP("tcp",address)
+			if err != nil {
+				log.Fatal("ERROR ", err, ln)
+			} else {
+				log.Output(0, "Listening on "+protocol+":"+tcpPort)
+				buf := make([]byte, 1024)
+				for {
+					conn, connErr := ln.Accept()
+					if connErr != nil {
+						// handle error
+						log.Println("ERROR ", connErr)
 					} else {
-						log.Println(string(buf[0:n]))
+						n, errRead := conn.Read(buf)
+						if errRead != nil {
+							log.Fatal("ERROR", errRead)
+						} else {
+							sip.Message(conn.RemoteAddr(), string(buf[0:n])) //send the package to sip package
+						}
 					}
-				}
 
+				}
 			}
 		}
 	}
 }
 func main(){
 	log.Println("<<<==========HPS==========>>>")
+	Cnf = config.Read()
 	go start("tcp")
 	go start("udp")
 	i := 1

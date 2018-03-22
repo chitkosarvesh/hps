@@ -1,0 +1,6 @@
+{
+  "server":{
+    "tcpPort":"5060",
+    "udpPort":"5060"
+  }
+}
