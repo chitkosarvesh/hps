@@ -15,7 +15,7 @@ import (
 	"log"
 )
 var config gonfig.Gonfig
-// Reads the configuration file stored in ${ROOT}/config/hps.json
+//	Reads the configuration file stored in ${ROOT}/config/hps.json
 func Read()(jsonGonfig gonfig.Gonfig)	{
 	f,err := os.Open("config/hps.json")
 	defer f.Close()

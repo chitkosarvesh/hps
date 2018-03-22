@@ -23,6 +23,7 @@ import (
 	"hps/app/config"
 	"hps/app/gonfig"
 )
+//Variable that stores the configuration
 var Cnf gonfig.Gonfig
 func start(protocol string)	{
 	log.Println("Starting "+protocol+" listener")
