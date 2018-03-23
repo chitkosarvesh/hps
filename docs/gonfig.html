@@ -1,0 +1,205 @@
+use 'godoc cmd/hps/app/gonfig' for documentation on the hps/app/gonfig command 
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+
+
+	
+		<a href="/src/hps/app/gonfig/gonfig.go">gonfig.go</a>:<pre><span class="comment">/*
+Package gonfig implements methods for reading config files encoded in json using path expressions and default fallback values
+*/</span>
+package gonfig
+
+type Gonfig interface {
+    Get(key string, defaultValue interface{}) (interface{}, error)
+    GetString(key string, defaultValue interface{}) (string, error)
+    GetInt(key string, defaultValue interface{}) (int, error)
+    GetFloat(key string, defaultValue interface{}) (float64, error)
+    GetBool(key string, defaultValue interface{}) (bool, error)
+    GetAs(key string, target interface{}) error
+}
+
+type KeyNotFoundError struct {
+
+}
+
+func (err *KeyNotFoundError) Error() string {
+    return fmt.Sprintf(&#34;key not found, key: %s&#34;, err.key)
+}
+
+type UnexpectedValueTypeError struct {
+
+}
+
+func (err *UnexpectedValueTypeError) Error() string {
+    return fmt.Sprintf(&#34;%s, key: %s, value: %v (%s) %T&#34;, err.message, err.key, err.value, reflect.TypeOf(err.value).Name(), err.value)
+}
+</pre>
+	
+		<a href="/src/hps/app/gonfig/json.go">json.go</a>:<pre>package gonfig
+
+<span class="comment">// Gonfig implementation</span>
+<span class="comment">// Implements the Gonfig interface</span>
+type JsonGonfig struct {
+
+}
+
+<span class="comment">// FromJson reads the contents from the supplied reader.</span>
+<span class="comment">// The content is parsed as json into a map[string]interface{}.</span>
+<span class="comment">// It returns a JsonGonfig struct pointer and any error encountered</span>
+func FromJson(reader io.Reader) (Gonfig, error) {
+    jsonBytes, err := ioutil.ReadAll(reader)
+    if err != nil {
+        return nil, err
+    }
+    var obj map[string]interface{}
+    if err := json.Unmarshal(jsonBytes, &amp;obj); err != nil {
+        return nil, err
+    }
+    return &amp;JsonGonfig{obj}, nil
+}
+
+<span class="comment">// GetString uses Get to fetch the value behind the supplied key.</span>
+<span class="comment">// It returns a string with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// If value is not a string it returns a UnexpectedValueTypeError</span>
+func (jgonfig *JsonGonfig) GetString(key string, defaultValue interface{}) (string, error) {
+    configValue, err := jgonfig.Get(key, defaultValue)
+    if err != nil {
+        return &#34;&#34;, err
+    }
+    if stringValue, ok := configValue.(string); ok {
+        return stringValue, nil
+    } else {
+        return &#34;&#34;, &amp;UnexpectedValueTypeError{key: key, value: configValue, message: &#34;value is not a string&#34;}
+    }
+}
+
+<span class="comment">// GetInt uses Get to fetch the value behind the supplied key.</span>
+<span class="comment">// It returns a int with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// If value is not a int it returns a UnexpectedValueTypeError</span>
+func (jgonfig *JsonGonfig) GetInt(key string, defaultValue interface{}) (int, error) {
+    value, err := jgonfig.GetFloat(key, defaultValue)
+    if err != nil {
+        return -1, err
+    }
+    return int(value), nil
+}
+
+<span class="comment">// GetFloat uses Get to fetch the value behind the supplied key.</span>
+<span class="comment">// It returns a float with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// It returns a bool with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// If value is not a float it returns a UnexpectedValueTypeError</span>
+func (jgonfig *JsonGonfig) GetFloat(key string, defaultValue interface{}) (float64, error) {
+    configValue, err := jgonfig.Get(key, defaultValue)
+    if err != nil {
+        return -1.0, err
+    }
+    if floatValue, ok := configValue.(float64); ok {
+        return floatValue, nil
+    } else if intValue, ok := configValue.(int); ok {
+        return float64(intValue), nil
+    } else {
+        return -1.0, &amp;UnexpectedValueTypeError{key: key, value: configValue, message: &#34;value is not a float&#34;}
+    }
+}
+
+<span class="comment">// GetBool uses Get to fetch the value behind the supplied key.</span>
+<span class="comment">// It returns a bool with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// If value is not a bool it returns a UnexpectedValueTypeError</span>
+func (jgonfig *JsonGonfig) GetBool(key string, defaultValue interface{}) (bool, error) {
+    configValue, err := jgonfig.Get(key, defaultValue)
+    if err != nil {
+        return false, err
+    }
+    if boolValue, ok := configValue.(bool); ok {
+        return boolValue, nil
+    } else {
+        return false, &amp;UnexpectedValueTypeError{key: key, value: configValue, message: &#34;value is not a bool&#34;}
+    }
+}
+
+<span class="comment">// GetAs uses Get to fetch the value behind the supplied key.</span>
+<span class="comment">// The value is serialized into json and deserialized into the supplied target interface.</span>
+<span class="comment">// It returns any error encountered.</span>
+func (jgonfig *JsonGonfig) GetAs(key string, target interface{}) error {
+    configValue, err := jgonfig.Get(key, nil)
+    if err != nil {
+        return err
+    }
+    jsonBytes, err := json.Marshal(configValue)
+    if err != nil {
+        return err
+    }
+    if err := json.Unmarshal(jsonBytes, target); err != nil {
+        return err
+    }
+    return nil
+}
+
+<span class="comment">// Get attempts to retreive the value behind the supplied key.</span>
+<span class="comment">// It returns a interface{} with either the retreived value or the default value and any error encountered.</span>
+<span class="comment">// If supplied key is not found and defaultValue is set to nil it returns a KeyNotFoundError</span>
+<span class="comment">// If supplied key path goes deeper into a non-map type (string, int, bool) it returns a UnexpectedValueTypeError</span>
+func (jgonfig *JsonGonfig) Get(key string, defaultValue interface{}) (interface{}, error) {
+    parts := strings.Split(key, &#34;/&#34;)
+    var tmp interface{} = jgonfig.obj
+    for index, part := range parts {
+        if len(part) == 0 {
+            continue
+        }
+        if confMap, ok := tmp.(map[string]interface{}); ok {
+            if value, exists := confMap[part]; exists {
+                tmp = value
+            } else if defaultValue != nil {
+                return defaultValue, nil
+            } else {
+                return nil, &amp;KeyNotFoundError{key: path.Join(append(parts[:index], part)...)}
+            }
+        } else if confMap, ok := tmp.(map[interface{}]interface{}); ok {
+            if value, exists := confMap[part]; exists {
+                tmp = value
+            } else if defaultValue != nil {
+                return defaultValue, nil
+            } else {
+                return nil, &amp;KeyNotFoundError{key: path.Join(append(parts[:index], part)...)}
+            }
+        } else {
+            return nil, &amp;UnexpectedValueTypeError{key: path.Join(parts[:index]...), value: tmp, message: &#34;value behind key is not a map[string]interface{}&#34;}
+        }
+    }
+    return tmp, nil
+}
+</pre>
+	
+		<a href="/src/hps/app/gonfig/yaml.go">yaml.go</a>:<pre>package gonfig
+
+<span class="comment">// FromYml reads the contents from the supplied reader.</span>
+<span class="comment">// The content is parsed as json into a map[string]interface{}.</span>
+<span class="comment">// It returns a JsonGonfig struct pointer and any error encountered</span>
+func FromYml(reader io.Reader) (Gonfig, error) {
+
+    inputBytes, err := ioutil.ReadAll(reader)
+    if err != nil {
+        return nil, err
+    }
+    var obj map[string]interface{}
+    if err := yaml.Unmarshal(inputBytes, &amp;obj); err != nil {
+        return nil, err
+    }
+    return &amp;JsonGonfig{obj}, nil
+}
+</pre>
+	
+
+
+

@@ -9,11 +9,17 @@
 */
 package sip
 
-import (
-	"log"
-	"net"
-)
+import "net"
+
+//Checks whether a request is a valid SIP request, checks what request is received and calls the handler function for those Requests
+func findRequestType(m SIPMessage)	{
+
+}
+
 //	Method that receives the SIP messages from the main code
-func Message(addr net.Addr ,message string){
-	log.Println(addr,message)
+func Message(addr net.Addr ,body string){
+	var m SIPMessage
+	m.address=addr
+	m.body=body
+	findRequestType(m)
 }
