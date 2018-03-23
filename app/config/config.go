@@ -11,18 +11,20 @@ package config
 
 import (
 	"hps/app/gonfig"
-	"os"
 	"log"
+	"os"
 )
+
 var config gonfig.Gonfig
+
 //	Reads the configuration file stored in ${ROOT}/config/hps.json
-func Read()(jsonGonfig gonfig.Gonfig)	{
-	f,err := os.Open("config/hps.json")
+func Read() (jsonGonfig gonfig.Gonfig) {
+	f, err := os.Open("config/hps.json")
 	defer f.Close()
 	if err != nil {
-		log.Fatal("ERROR ",err)
+		log.Fatal("ERROR ", err)
 	} else {
-		config,err := gonfig.FromJson(f)
+		config, err := gonfig.FromJson(f)
 		if err != nil {
 			log.Fatal("Error ", err)
 

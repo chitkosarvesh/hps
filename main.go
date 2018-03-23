@@ -17,44 +17,46 @@
 package main
 
 import (
-	"log"
-	"net"
-	"hps/app/sip"
 	"hps/app/config"
 	"hps/app/gonfig"
+	"hps/app/sip"
+	"log"
+	"net"
 )
+
 //Variable that stores the configuration
 var Cnf gonfig.Gonfig
-func start(protocol string)	{
-	log.Println("Starting "+protocol+" listener")
+
+func start(protocol string) {
+	log.Println("Starting " + protocol + " listener")
 	if protocol == "udp" {
-		udpPort,_:=Cnf.GetString("server/udpPort","5060")
-		address,err := net.ResolveUDPAddr("udp",":"+udpPort)
+		udpPort, _ := Cnf.GetString("server/udpPort", "5060")
+		address, err := net.ResolveUDPAddr("udp", ":"+udpPort)
 		if err != nil {
-			log.Fatal("ERROR ",err)
+			log.Fatal("ERROR ", err)
 		} else {
-			ln,err := net.ListenUDP("udp", address)
-			if err != nil	{
-				log.Fatal("ERROR ",err)
+			ln, err := net.ListenUDP("udp", address)
+			if err != nil {
+				log.Fatal("ERROR ", err)
 			} else {
-				log.Println("Listening on udp:"+udpPort)
+				log.Println("Listening on udp:" + udpPort)
 				buf := make([]byte, 1024)
 				for {
-					n,addr,err := ln.ReadFromUDP(buf)
-					sip.Message(addr,string(buf[0:n])) //send the message to sip package
+					n, addr, err := ln.ReadFromUDP(buf)
+					sip.Message(addr, string(buf[0:n])) //send the message to sip package
 					if err != nil {
-						log.Println("ERROR ",err)
+						log.Println("ERROR ", err)
 					}
 				}
 			}
 		}
 	} else {
-		tcpPort,_:=Cnf.GetString("server/tcpPort","5060")
-		address,err := net.ResolveTCPAddr("tcp",":"+tcpPort)
-		if err !=nil{
-			log.Println("ERROR ",err)
+		tcpPort, _ := Cnf.GetString("server/tcpPort", "5060")
+		address, err := net.ResolveTCPAddr("tcp", ":"+tcpPort)
+		if err != nil {
+			log.Println("ERROR ", err)
 		} else {
-			ln, err := net.ListenTCP("tcp",address)
+			ln, err := net.ListenTCP("tcp", address)
 			if err != nil {
 				log.Fatal("ERROR ", err, ln)
 			} else {
@@ -79,14 +81,14 @@ func start(protocol string)	{
 		}
 	}
 }
-func main(){
+func main() {
 	log.Println("<<<==========HPS==========>>>")
 	Cnf = config.Read()
 	go start("tcp")
 	go start("udp")
 	i := 1
 	for {
-		if i<1000 {
+		if i < 1000 {
 
 		}
 	}
