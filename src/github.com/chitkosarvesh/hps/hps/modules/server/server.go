@@ -46,42 +46,6 @@ func Start(){
 		}
 		go handleRequest(conn_udp)
 	}
-	// if config.GetBool("server.tcp") {
-	// 	tcp_l,err := net.Listen("tcp",address+":"+port)
-	// 	if err != nil {
-	// 		fmt.Println("Error",err)
-	// 	}
-	// 	defer tcp_l.Close()
-	// 	fmt.Println("Listening on tcp://" + address + ":" + port)
-	// 	for {
-	// 		// Listen for an incoming connection.
-	// 		conn, err := tcp_l.Accept()
-	// 		if err != nil {
-	// 			fmt.Println("Error accepting: ", err.Error())
-	// 			os.Exit(1)
-	// 		}
-	// 		// Handle connections in a new goroutine.
-	// 		go handleRequest(conn)
-	// 	}
-	// }
-	// if config.GetBool("server.udp"){
-	// 	udp_l,err := net.Listen("tcp",address+":"+port)
-	// 	if err != nil {
-	// 		fmt.Println("Error",err)
-	// 	}
-	// 	defer udp_l.Close()
-	// 	fmt.Println("Listening on udp://" + address + ":" + port)
-	// 	for {
-	// 		// Listen for an incoming connection.
-	// 		conn, err := udp_l.Accept()
-	// 		if err != nil {
-	// 			fmt.Println("Error accepting: ", err.Error())
-	// 			os.Exit(1)
-	// 		}
-	// 		// Handle connections in a new goroutine.
-	// 		go handleRequest(conn)
-	// 	}
-	// }
 }
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
